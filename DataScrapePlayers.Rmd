@@ -1,0 +1,727 @@
+---
+title: "DataScrapePlayers"
+output:
+  pdf_document: default
+  html_document: default
+date: "2023-10-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Import CSV and Packages
+
+```{r}
+
+library(rvest)
+library(tidyverse) 
+library(rfm)
+library(ggplot2)
+library(dplyr)
+library(mice)
+library(car)
+Players <- read.csv('Players.csv')
+
+```
+
+## Clean Data
+
+```{r}
+
+# Players <- Players[Players$active_from > 1993, ]
+Players <- Players[!is.na(Players$NCAA_games), ]
+
+```
+
+## Helper Function
+
+```{r}
+
+AddStat <- function(x){
+  
+  tryCatch(
+    expr = {
+      
+      x <- as.numeric(x)
+      
+    },
+    warning = function(w){
+      
+      x <- NA
+      
+    })
+}
+
+```
+
+
+## Implimentation
+
+```{r}
+
+# CollegeReference <- "https://www.sports-reference.com/cbb/players/"
+# 
+# CollegeStats <- tibble(
+#   name = character(), 
+#   games = numeric(), 
+#   gs = numeric(), 
+#   mpg = numeric(),
+#   fg = numeric(), 
+#   fga = numeric(), 
+#   fgp = numeric(), 
+#   two = numeric(), 
+#   twoa = numeric(), 
+#   twop = numeric(),
+#   three = numeric(), 
+#   threea = numeric(), 
+#   threep = numeric(),
+#   ft = numeric(), 
+#   fta = numeric(), 
+#   ftp = numeric(),
+#   orb = numeric(),
+#   drb = numeric(),
+#   trb = numeric(),
+#   apg = numeric(),
+#   spg = numeric(),
+#   bpg = numeric(),
+#   tpg = numeric(),
+#   pfpg = numeric(),
+#   ppg = numeric(),
+#   sos = numeric()
+# )
+# 
+# for(i in seq_len(nrow(Players))){
+#   
+#   Sys.sleep(2)
+#   Name <- Players[i, 7]
+#   URL <- tolower(str_replace(toString(Name), " ", "-")) 
+#   HTML <- NULL
+#   tryCatch({
+#     
+#     HTML <- read_html(paste0(CollegeReference, URL, "-1.html"))
+#     
+#   }, error = function(e){
+#     
+#     HTML <- NULL
+#     
+#     })
+#   
+#   if(is.null(HTML)){
+#     
+#     next
+#     
+#   }
+#   
+#   Table <- (HTML %>% html_elements("table") %>% html_table())[[1]]
+#   Career <- Table[Table$Season == "Career", ] 
+#   
+#   CollegeStats <- CollegeStats %>% add_row(
+#     name = Name, 
+#     games = AddStat(Career$G), 
+#     gs = AddStat(Career$GS), 
+#     mpg = AddStat(Career$MP), 
+#     fg = AddStat(Career$FG), 
+#     fga = AddStat(Career$FGA), 
+#     fgp = AddStat(Career$`FG%`), 
+#     two = AddStat(Career$`2P`), 
+#     twoa = AddStat(Career$`2PA`), 
+#     twop = AddStat(Career$`2P%`), 
+#     three = AddStat(Career$`3P`), 
+#     threea = AddStat(Career$`3PA`), 
+#     threep = AddStat(Career$`3P%`), 
+#     ft = AddStat(Career$FT), 
+#     fta = AddStat(Career$FTA), 
+#     ftp = AddStat(Career$`FT%`), 
+#     orb = AddStat(Career$ORB), 
+#     drb = AddStat(Career$DRB), 
+#     trb = AddStat(Career$TRB), 
+#     apg = AddStat(Career$AST), 
+#     spg = AddStat(Career$STL), 
+#     bpg = AddStat(Career$BLK), 
+#     tpg = AddStat(Career$TOV), 
+#     pfpg = AddStat(Career$PF), 
+#     ppg = AddStat(Career$PTS), 
+#     sos = AddStat(Career$SOS)
+#   )
+#   
+# }
+# 
+# write.table(CollegeStats, file = "collegestats.csv", sep = ",", row.names = FALSE) 
+
+```
+
+## Response
+
+```{r}
+
+# CollegeStats <- read.csv("CollegeStatsFINAL.csv")
+# AllStarURL <- "https://en.wikipedia.org/wiki/List_of_NBA_All-Stars"
+# AllStarHTML <- read_html(AllStars) 
+# AllStarTable <- (AllStarHTML %>% html_elements("table") %>% html_table())[[2]]
+# AllStarNames <- str_extract(AllStarTable$Player, "^([:alpha:]|-|'|\\.|\ )+") 
+# AllStarIndex <- numeric(nrow(CollegeStats))
+# 
+# for(i in seq_len(nrow(CollegeStats))){
+#   
+#   if(any(CollegeStats$name[i] == AllStarNames)){
+#     
+#     AllStarIndex[i] <- 1
+#     
+#   }
+#   
+# }
+# 
+# CollegeStats <- CollegeStats %>% add_column(
+#   
+#   allstar = AllStarIndex
+#   
+# )
+# 
+# write.table(CollegeStats, file = "collegestats.csv", sep = ",", row.names = FALSE) -->
+
+```
+
+## Clean Data
+
+```{r}
+
+CollegeStatsFinal <- read.csv("CollegeStatsIncludeAllStar.csv")[, -1]
+CleanCollege <- na.omit(CollegeStatsFinal) 
+
+```
+
+## Visualize Data
+
+```{r}
+
+ggplot(CleanCollege, aes(x = mpg, fill = as.character(allstar))) + geom_histogram(bins = 60)
+ggplot(CleanCollege, aes(x = fga, fill = as.character(allstar))) + geom_histogram(bins = 60)
+ggplot(CleanCollege, aes(x = threea, fill = as.character(allstar))) + geom_histogram(bins = 60)
+ggplot(CleanCollege, aes(x = apg, fill = as.character(allstar))) + geom_histogram(bins = 60)
+ggplot(CleanCollege, aes(x = threep, fill = as.character(allstar))) + geom_histogram(bins = 60)
+ggplot(CleanCollege, aes(x = sos, fill = as.character(allstar))) + geom_histogram(bins = 60)
+ggplot(CleanCollege, aes(x = bpg, fill = as.character(allstar))) + geom_histogram(bins = 60)
+ggplot(CleanCollege, aes(x = spg, fill = as.character(allstar))) + geom_histogram(bins = 60)
+ggplot(CleanCollege, aes(x = fgp, fill = as.character(allstar))) + geom_histogram(bins = 60)
+
+```
+
+## Logistic Regression
+
+```{r}
+
+# Assuming your dataset is named CleanCollege
+# Fit a logistic regression model
+logistic_model <- glm(allstar ~ . - name, data = CleanCollege, family = binomial)
+
+# Summary of the model
+summary(logistic_model) 
+
+```
+
+## Finding Significant Predictors
+
+```{r}
+
+logistic_model_steals <- glm(allstar ~ spg, data = CleanCollege, family = binomial)
+
+# Summary of the model
+summary(logistic_model_steals) 
+
+SPGA <- mean(CleanCollege[CleanCollege$allstar == 1, ]$spg)
+SPGN <- mean(CleanCollege[CleanCollege$allstar == 0, ]$spg)
+
+# AIC(logistic_model, k = 2) 
+
+# cor(CleanCollege[, 2:27]) 
+
+plot(CleanCollege$spg, CleanCollege$allstar)  
+
+```
+
+## MICE
+
+```{r}
+
+set.seed(1)
+CollegeStatImputed <- complete(mice(CollegeStatsFinal, method = "pmm"))
+
+```
+
+## Logistic Regression
+
+```{r}
+
+logistic_model <- glm(allstar ~ . - name, data = CollegeStatImputed, family = binomial)
+
+# Summary of the model
+summary(logistic_model) 
+
+```
+
+## AIC and BIC
+
+```{r}
+
+backAIC <- step(logistic_model, direction = "backward", data = CollegeStatImputed)
+frontAIC <- step(logistic_model, direction = "forward", data = CollegeStatImputed)
+bothAIC <- step(logistic_model, direction = "both", data = CollegeStatImputed)
+
+backBIC <- step(logistic_model, direction = "backward", data = CollegeStatImputed, k = log(nrow(CollegeStatImputed)))
+frontBIC <- step(logistic_model, direction = "forward", data = CollegeStatImputed, k = log(nrow(CollegeStatImputed)))
+bothBIC <- step(logistic_model, direction = "both", data = CollegeStatImputed, k = log(nrow(CollegeStatImputed)))
+
+```
+
+## Lasso Regression
+
+```{r}
+
+cv_fit <- cv.glmnet(as.matrix(CollegeStatImputed[, -ncol(CollegeStatImputed)]), as.matrix(CollegeStatImputed[, ncol(CollegeStatImputed)]), family = "binomial", alpha = 1) 
+mlog <- glm(allstar ~ games + +gs + mpg + fg + fgp + twop + threea + threep + ft + ftp + trb + apg + spg + bpg + tpg + pfpg + sos, data = CollegeStatImputed)
+
+```
+
+
+## BackBIC Logistic Regression
+
+```{r}
+
+logistic_model_backBIC <- glm(allstar ~ games + fg + fgp + ft + drb + apg + spg + tpg + sos, data = CollegeStatImputed) 
+summary(logistic_model_backBIC) 
+
+```
+
+## Visualization
+
+```{r}
+
+plot(logistic_model_backBIC$fitted.values, CollegeStatImputed$allstar) 
+
+```
+
+## Multicollinearity
+
+```{r}
+
+vif(logistic_model_backBIC) 
+# pairs(allstar ~ games + fg + fgp + ft + drb + apg + spg + tpg + sos, data = CollegeStatImputed)
+cor(cbind(CollegeStatImputed$games, CollegeStatImputed$fg, CollegeStatImputed$fgp, CollegeStatImputed$ft, CollegeStatImputed$drb, CollegeStatImputed$apg, CollegeStatImputed$spg, CollegeStatImputed$tpg, CollegeStatImputed$sos))  
+
+```
+
+## Training Testing Split
+
+```{r}
+
+set.seed(100) 
+trainingIndex <- sample(seq_len(nrow(CollegeStatImputed)), floor(.75 * nrow(CollegeStatImputed)), replace = FALSE) 
+training <- CollegeStatImputed[trainingIndex, ] 
+testing <- CollegeStatImputed[-trainingIndex, ]
+training_model <- glm(allstar ~ games + fg + fgp + ft + drb + apg + spg + tpg + sos, data = training) 
+
+testing_pred <- cbind(testing$games, testing$fg, testing$fgp, testing$ft, testing$drb, testing$apg, testing$spg, testing$tpg, testing$sos)
+
+training_pred <- cbind(training$games, training$fg, training$fgp, training$ft, training$drb, training$apg, training$spg, training$tpg, training$sos)
+prediction_testing <- matrix(ncol = 1, nrow = nrow(testing)) 
+for(i in seq_len(nrow(testing))){
+
+  prediction_testing[i] <- training_model$coefficients[1]  + sum(training_model$coefficients[-1] * testing_pred[i, ])
+  prediction_testing[i] <- ifelse(prediction_testing[i] > .5, 1, 0) 
+
+}
+
+truepositive <- 0
+falsepositive <- 0
+truenegative <- 0 
+falsenegative <- 0 
+for(i in seq_len(nrow(testing))){
+  
+  if(prediction_testing[i] == 1 && testing$allstar[i] == 1){
+    
+    truepositive <- truepositive + 1
+    
+  }else if(prediction_testing[i] == 1 && testing$allstar[i] == 0){
+    
+    falsepositive <- falsepositive + 1
+    
+  }else if(prediction_testing[i] == 0 && testing$allstar[i] == 0){
+    
+    truenegative <- truenegative + 1
+    
+  }else{
+    
+    falsenegative <- falsenegative + 1
+    
+  }
+  
+}
+
+grid <- matrix(c(truepositive, falsepositive, truenegative, falsenegative), ncol = 2, nrow = 2) 
+rownames(grid) <- c("True", "False")
+colnames(grid) <- c("Positive", "Negative")
+grid
+
+```
+
+## K-Fold
+
+```{r}
+
+## Synthetic Data
+library(mclust)
+library(class) 
+library(MASS) 
+set.seed(100) 
+CollegeStatImputedReduced <- CollegeStatImputed[, c(1, 4, 6, 13, 17, 19, 20, 22, 25, 26)]
+
+my.thres <- .5
+  
+  i.test <- seq((round(i * size) + 1), round((i + 1) * size))
+  sa.train <- CollegeStatImputedReduced[-i.test, ] 
+  sa.test <- CollegeStatImputedReduced[i.test, ]
+  
+  # Logistic Regression
+  ml <- glm(allstar ~ ., data = sa.train, family = "binomial")
+  # pred.log.odds <- predict(ml)
+  # pred.probs <- predict(ml, type = "response")
+  # pred.log.odds.test <- predict(ml, sa.test[, -ncol(sa.test)])
+  pred.prob.test <- predict(ml, sa.test[, -ncol(sa.test)], type = "response")
+  predicted <- pred.prob.test > my.thres
+  tableLog <- cbind(table("Reference" = sa.test[ ,ncol(sa.test)], "Predicted" = predicted), c(0, 0))
+  accuracyLog <- (tableLog[1, 1] + tableLog[2, 2]) / nrow(sa.test)
+  errorLogRun <- 1 - accuracyLog
+  errorLog <- errorLog + errorLogRun
+  truepositiveLogRun <- ifelse((tableLog[2, 2] + tableLog[1, 2]) == 0, 1, tableLog[2, 2] / (tableLog[2, 2] + tableLog[1, 2]))
+  truepositiveLog <- truepositiveLog + truepositiveLogRun
+  
+  # KNN
+  m.knn <- knn(sa.train[, -ncol(sa.train)], sa.test[, -ncol(sa.test)], sa.train[, ncol(sa.train)], k = 11) 
+  table.knn <- table(m.knn, sa.test[, ncol(sa.test)]) 
+  accuracyKNN <- (table.knn[1, 1] + table.knn[2, 2]) / nrow(sa.test) 
+  errorKNNRun <- 1 - accuracyKNN
+  errorKNN <- errorKNN + errorKNNRun
+  truepositiveKNNRun <- ifelse((table.knn[2, 2] + table.knn[1, 2]) == 0, 1, table.knn[2, 2] / (table.knn[2, 2] + table.knn[1, 2]))
+  truepositiveKNN <- truepositiveKNN + truepositiveKNNRun
+  
+  # LDA
+  lda.mod <- lda(allstar ~ ., data = sa.train) 
+  pred.lda.test <- predict(lda.mod, sa.test[, -ncol(sa.test)])
+  tableLDA <- table("Reference" = sa.test[, ncol(sa.test)], "Predicted" = pred.lda.test$class)
+  accuracyLDA <- (tableLDA[1, 1] + tableLDA[2, 2]) / nrow(sa.test)  
+  errorLDARun <- 1 - accuracyLDA
+  errorLDA <- errorLDA + errorLDARun
+  truepositiveLDARun <- ifelse((tableLDA[2, 2] + tableLDA[1, 2]) == 0, 1, tableLDA[2, 2] / (tableLDA[2, 2] + tableLDA[1, 2]))
+  truepositiveLDA <- truepositiveLDA + truepositiveLDARun
+  
+  # QDA
+  qda.mod <- qda(allstar ~ ., data = sa.train)
+  pred.qda.test <- predict(qda.mod, sa.test[, -ncol(sa.test)])
+  tableQDA <- table("Reference" = sa.test[, ncol(sa.test)], "Predicted" = pred.qda.test$class)
+  accuracyQDA <- (tableQDA[1, 1] + tableQDA[2, 2]) / nrow(sa.test)  
+  errorQDARun <- 1 - accuracyQDA
+  errorQDA <- errorQDA + errorQDARun
+  truepositiveQDARun <- ifelse((tableQDA[2, 2] + tableQDA[1, 2]) == 0, 1, tableQDA[2, 2] / (tableQDA[2, 2] + tableQDA[1, 2]))
+  truepositiveQDA <- truepositiveQDA + truepositiveQDARun
+
+accuracyFinal <- c(1 - (errorLog / k), 1 - (errorKNN / k), 1 - (errorLDA / k), 1 - (errorQDA / k)) 
+truepositiveFinal <- c((truepositiveLog / k), (truepositiveKNN / k), (truepositiveLDA / k), (truepositiveQDA / k)) 
+final_results <- matrix(c(accuracyFinal, truepositiveFinal), nrow = 4) 
+rownames(final_results) <- c("Logistic Regression", "KNN", "LDA", "QDA")
+colnames(final_results) <- c("Accuracy", "True Positive Rate")
+final_results
+
+```
+
+## SMOTE
+
+```{r}
+
+library(performanceEstimation)
+
+set.seed(100)
+CollegeStatImputedReduced <- CollegeStatImputed[, c(2, 5, 7, 14, 18, 20, 21, 23, 26, 27)]
+CollegeStatImputedReducedFactor <- CollegeStatImputedReduced
+CollegeStatImputedReducedFactor$allstar <- as.factor(CollegeStatImputedReducedFactor$allstar)
+CollegeStatImputedSMOTE <- smote(allstar ~ ., CollegeStatImputedReducedFactor, perc.over = 7, perc.under = 1) 
+CollegeStatImputedSMOTEShuffled <- CollegeStatImputedSMOTE[sample(1:nrow(CollegeStatImputedSMOTE)), ]
+
+```
+
+## Train-Test Split Non-SMOTE
+
+```{r}
+
+i.test <- 
+sa.train <- CollegeStatImputedSMOTEShuffled[-i.test, ] 
+sa.test <- CollegeStatImputedSMOTEShuffled[i.test, ]
+
+```
+
+## K-Fold Improved
+
+```{r}
+
+library(mclust)
+library(class) 
+library(MASS) 
+set.seed(100) 
+
+# 49-Fold CV
+k <- floor(sqrt(nrow(CollegeStatImputedSMOTEShuffled)))
+size <- nrow(CollegeStatImputedSMOTEShuffled) / k
+
+# Initialize Results
+resultLR <- matrix(0, nrow = 3, ncol = 3) 
+rownames(resultLR) <-  c("False", "True", "Accuracy")
+colnames(resultLR) <- c("Precision", "Recall", "F1-Score")
+
+resultKNN <- matrix(0, nrow = 3, ncol = 3) 
+rownames(resultKNN) <-  c("False", "True", "Accuracy")
+colnames(resultKNN) <- c("Precision", "Recall", "F1-Score")
+
+resultLDA <- matrix(0, nrow = 3, ncol = 3) 
+rownames(resultLDA) <-  c("False", "True", "Accuracy")
+colnames(resultLDA) <- c("Precision", "Recall", "F1-Score")
+
+resultQDA <- matrix(0, nrow = 3, ncol = 3) 
+rownames(resultQDA) <-  c("False", "True", "Accuracy")
+colnames(resultQDA) <- c("Precision", "Recall", "F1-Score")
+
+my.thres <- .5
+
+for(i in 0:(k - 1)){
+  
+  # Train-Validation Split
+  i.test <- seq((round(i * size) + 1), round((i + 1) * size))
+  sa.train <- CollegeStatImputedSMOTEShuffled[-i.test, ] 
+  sa.test <- CollegeStatImputedSMOTEShuffled[i.test, ]
+  
+  # Logistic Regression
+  ml <- glm(allstar ~ ., data = sa.train, family = "binomial")
+  pred.prob.test <- predict(ml, sa.test[, -ncol(sa.test)], type = "response")
+  predicted <- pred.prob.test > my.thres
+  tableLog <- cbind(table("Reference" = sa.test[ ,ncol(sa.test)], "Predicted" = predicted), c(0, 0))
+  resultLR[1, 1] <- resultLR[1, 1] + ((tableLog[1, 1] / (tableLog[1, 1] + tableLog[2, 1])) / k) # False Precision
+  resultLR[2, 1] <- resultLR[2, 1] + ((tableLog[2, 2] / (tableLog[2, 2] + tableLog[1, 2])) / k) # True Precision
+  resultLR[1, 2] <- resultLR[1, 2] + ((tableLog[1, 1] / (tableLog[1, 1] + tableLog[1, 2])) / k) # False Recall
+  resultLR[2, 2] <- resultLR[2, 2] + ((tableLog[2, 2] / (tableLog[2, 2] + tableLog[2, 1])) / k) # True Recall 
+  resultLR[3, 3] <- resultLR[3, 3] + ((tableLog[1, 1] + tableLog[2, 2]) / nrow(sa.test) / k) # Accuracy
+  
+  # KNN
+  m.knn <- knn(sa.train[, -ncol(sa.train)], sa.test[, -ncol(sa.test)], sa.train[, ncol(sa.train)], k = 11) 
+  table.knn <- table("Reference" = sa.test[, ncol(sa.test)], "Predicted" = m.knn) 
+  resultKNN[1, 1] <- resultKNN[1, 1] + ((table.knn[1, 1] / (table.knn[1, 1] + table.knn[2, 1])) / k) # False Precision
+  resultKNN[2, 1] <- resultKNN[2, 1] + ((table.knn[2, 2] / (table.knn[2, 2] + table.knn[1, 2])) / k) # True Precision
+  resultKNN[1, 2] <- resultKNN[1, 2] + ((table.knn[1, 1] / (table.knn[1, 1] + table.knn[1, 2])) / k) # False Recall
+  resultKNN[2, 2] <- resultKNN[2, 2] + ((table.knn[2, 2] / (table.knn[2, 2] + table.knn[2, 1])) / k) # True Recall
+  resultKNN[3, 3] <- resultKNN[3, 3] + ((table.knn[1, 1] + table.knn[2, 2]) / nrow(sa.test) / k) # Accuracy
+  
+  # LDA
+  lda.mod <- lda(allstar ~ ., data = sa.train) 
+  pred.lda.test <- predict(lda.mod, sa.test[, -ncol(sa.test)])
+  tableLDA <- table("Reference" = sa.test[, ncol(sa.test)], "Predicted" = pred.lda.test$class)
+  resultLDA[1, 1] <- resultLDA[1, 1] + ((tableLDA[1, 1] / (tableLDA[1, 1] + tableLDA[2, 1])) / k) # False Precision
+  resultLDA[2, 1] <- resultLDA[2, 1] + ((tableLDA[2, 2] / (tableLDA[2, 2] + tableLDA[1, 2])) / k) # True Precision
+  resultLDA[1, 2] <- resultLDA[1, 2] + ((tableLDA[1, 1] / (tableLDA[1, 1] + tableLDA[1, 2])) / k) # False Recall
+  resultLDA[2, 2] <- resultLDA[2, 2] + ((tableLDA[2, 2] / (tableLDA[2, 2] + tableLDA[2, 1])) / k) # True Recall
+  resultLDA[3, 3] <- resultLDA[3, 3] + ((tableLDA[1, 1] + tableLDA[2, 2]) / nrow(sa.test) / k) # Accuracy
+  
+  # QDA
+  qda.mod <- qda(allstar ~ ., data = sa.train)
+  pred.qda.test <- predict(qda.mod, sa.test[, -ncol(sa.test)])
+  tableQDA <- table("Reference" = sa.test[, ncol(sa.test)], "Predicted" = pred.qda.test$class)
+  resultQDA[1, 1] <- resultQDA[1, 1] + ((tableQDA[1, 1] / (tableQDA[1, 1] + tableQDA[2, 1])) / k) # False Precision
+  resultQDA[2, 1] <- resultQDA[2, 1] + ((tableQDA[2, 2] / (tableQDA[2, 2] + tableQDA[1, 2])) / k) # True Precision
+  resultQDA[1, 2] <- resultQDA[1, 2] + ((tableQDA[1, 1] / (tableQDA[1, 1] + tableQDA[1, 2])) / k) # False Recall
+  resultQDA[2, 2] <- resultQDA[2, 2] + ((tableQDA[2, 2] / (tableQDA[2, 2] + tableQDA[2, 1])) / k) # True Recall
+  resultQDA[3, 3] <- resultQDA[3, 3] + ((tableQDA[1, 1] + tableQDA[2, 2]) / nrow(sa.test) / k) # Accuracy
+  
+}
+
+# F-1 Score LR
+resultLR[1, 3] <- (2 * resultLR[1, 1] * resultLR[1, 2]) / (resultLR[1, 1] + resultLR[1, 2])
+resultLR[2, 3] <- (2 * resultLR[2, 1] * resultLR[2, 2]) / (resultLR[2, 1] + resultLR[2, 2])
+resultLR[3, c(1, 2)] <- NA
+resultLR
+
+# F-1 Score KNN
+resultKNN[1, 3] <- (2 * resultKNN[1, 1] * resultKNN[1, 2]) / (resultKNN[1, 1] + resultKNN[1, 2])
+resultKNN[2, 3] <- (2 * resultKNN[2, 1] * resultKNN[2, 2]) / (resultKNN[2, 1] + resultKNN[2, 2])
+resultKNN[3, c(1, 2)] <- NA
+resultKNN
+
+# F-1 Score LDA
+resultLDA[1, 3] <- (2 * resultLDA[1, 1] * resultLDA[1, 2]) / (resultLDA[1, 1] + resultLDA[1, 2])
+resultLDA[2, 3] <- (2 * resultLDA[2, 1] * resultLDA[2, 2]) / (resultLDA[2, 1] + resultLDA[2, 2])
+resultLDA[3, c(1, 2)] <- NA
+resultLDA
+
+# F-1 Score QDA
+resultQDA[1, 3] <- (2 * resultQDA[1, 1] * resultQDA[1, 2]) / (resultQDA[1, 1] + resultQDA[1, 2])
+resultQDA[2, 3] <- (2 * resultQDA[2, 1] * resultQDA[2, 2]) / (resultQDA[2, 1] + resultQDA[2, 2])
+resultQDA[3, c(1, 2)] <- NA
+resultQDA
+
+```
+
+# Model Comparison
+
+```{r}
+
+# Accuracy
+accuracy <- matrix(c(resultLR[3, 3], resultKNN[3, 3], resultLDA[3, 3], resultQDA[3, 3]), ncol = 1)
+rownames(accuracy) <- c("LR", "KNN", "LDA", "QDA") 
+colnames(accuracy) <- "Accuracy" 
+accuracy
+
+# True Precision
+trueprecision <- matrix(c(resultLR[2, 1], resultKNN[2, 1], resultLDA[2, 1], resultQDA[2, 1], 
+                          resultLR[2, 2], resultKNN[2, 2], resultLDA[2, 2], resultQDA[2, 2], 
+                          resultLR[2, 3], resultKNN[2, 3], resultLDA[2, 3], resultQDA[2, 3]), ncol = 3) 
+rownames(trueprecision) <- c("LR", "KNN", "LDA", "QDA") 
+colnames(trueprecision) <- c("T Precision", "T Recall", "T F1-Score") 
+trueprecision
+
+# False Precision
+falseprecision <- matrix(c(resultLR[1, 1], resultKNN[1, 1], resultLDA[1, 1], resultQDA[1, 1], 
+                          resultLR[1, 2], resultKNN[1, 2], resultLDA[1, 2], resultQDA[1, 2], 
+                          resultLR[1, 3], resultKNN[1, 3], resultLDA[1, 3], resultQDA[1, 3]), ncol = 3) 
+rownames(falseprecision) <- c("LR", "KNN", "LDA", "QDA") 
+colnames(falseprecision) <- c("F Precision", "F Recall", "F F1-Score") 
+falseprecision
+
+```
+
+## ROC Curves
+
+```{r}
+
+library(pROC) 
+
+# Logistic Regression
+roc_score <- roc(sa.test[, ncol(sa.test)], as.numeric(predicted)) 
+plot(roc_score, main = paste0("Logistic Regression : AUC = ", round(roc_score$auc, 4)))
+
+# KNN
+roc_score <- roc(sa.test[, ncol(sa.test)], as.numeric(m.knn)) 
+plot(roc_score, main = paste0("K-Nearest Neighbor : AUC = ", round(roc_score$auc, 4)))
+
+# LDA
+roc_score <- roc(sa.test[, ncol(sa.test)], as.numeric(pred.lda.test$class)) 
+plot(roc_score, main = paste0("Linear Discriminate Analysis : AUC = ", round(roc_score$auc, 4)))
+
+# QDA
+roc_score <- roc(sa.test[, ncol(sa.test)], as.numeric(pred.qda.test$class)) 
+plot(roc_score, main = paste0("Quadratic Discriminate Analysis : AUC = ", round(roc_score$auc, 4)))
+
+```
+
+## Train-Test Split
+
+```{r}
+
+library(mclust)
+library(class) 
+library(MASS) 
+set.seed(100) 
+
+# 49-Fold CV
+k <- floor(sqrt(nrow(CollegeStatImputedSMOTEShuffled)))
+size <- nrow(CollegeStatImputedSMOTEShuffled) / k
+
+# Initialize Results
+resultLR <- matrix(0, nrow = 3, ncol = 3) 
+rownames(resultLR) <-  c("False", "True", "Accuracy")
+colnames(resultLR) <- c("Precision", "Recall", "F1-Score")
+
+resultKNN <- matrix(0, nrow = 3, ncol = 3) 
+rownames(resultKNN) <-  c("False", "True", "Accuracy")
+colnames(resultKNN) <- c("Precision", "Recall", "F1-Score")
+
+resultLDA <- matrix(0, nrow = 3, ncol = 3) 
+rownames(resultLDA) <-  c("False", "True", "Accuracy")
+colnames(resultLDA) <- c("Precision", "Recall", "F1-Score")
+
+resultQDA <- matrix(0, nrow = 3, ncol = 3) 
+rownames(resultQDA) <-  c("False", "True", "Accuracy")
+colnames(resultQDA) <- c("Precision", "Recall", "F1-Score")
+
+my.thres <- .5
+
+  
+  # Train-Validation Split
+  i.test <- sample()
+  sa.train <- CollegeStatImputedSMOTEShuffled[-i.test, ] 
+  sa.test <- CollegeStatImputedSMOTEShuffled[i.test, ]
+  
+  # Logistic Regression
+  ml <- glm(allstar ~ ., data = sa.train, family = "binomial")
+  pred.prob.test <- predict(ml, sa.test[, -ncol(sa.test)], type = "response")
+  predicted <- pred.prob.test > my.thres
+  tableLog <- cbind(table("Reference" = sa.test[ ,ncol(sa.test)], "Predicted" = predicted), c(0, 0))
+  resultLR[1, 1] <- resultLR[1, 1] + ((tableLog[1, 1] / (tableLog[1, 1] + tableLog[2, 1]))) # False Precision
+  resultLR[2, 1] <- resultLR[2, 1] + ((tableLog[2, 2] / (tableLog[2, 2] + tableLog[1, 2]))) # True Precision
+  resultLR[1, 2] <- resultLR[1, 2] + ((tableLog[1, 1] / (tableLog[1, 1] + tableLog[1, 2]))) # False Recall
+  resultLR[2, 2] <- resultLR[2, 2] + ((tableLog[2, 2] / (tableLog[2, 2] + tableLog[2, 1]))) # True Recall 
+  resultLR[3, 3] <- resultLR[3, 3] + ((tableLog[1, 1] + tableLog[2, 2]) / nrow(sa.test)) # Accuracy
+  
+  # KNN
+  m.knn <- knn(sa.train[, -ncol(sa.train)], sa.test[, -ncol(sa.test)], sa.train[, ncol(sa.train)], k = 11) 
+  table.knn <- table("Reference" = sa.test[, ncol(sa.test)], "Predicted" = m.knn) 
+  resultKNN[1, 1] <- resultKNN[1, 1] + ((table.knn[1, 1] / (table.knn[1, 1] + table.knn[2, 1]))) # False Precision
+  resultKNN[2, 1] <- resultKNN[2, 1] + ((table.knn[2, 2] / (table.knn[2, 2] + table.knn[1, 2]))) # True Precision
+  resultKNN[1, 2] <- resultKNN[1, 2] + ((table.knn[1, 1] / (table.knn[1, 1] + table.knn[1, 2]))) # False Recall
+  resultKNN[2, 2] <- resultKNN[2, 2] + ((table.knn[2, 2] / (table.knn[2, 2] + table.knn[2, 1]))) # True Recall
+  resultKNN[3, 3] <- resultKNN[3, 3] + ((table.knn[1, 1] + table.knn[2, 2]) / nrow(sa.test)) # Accuracy
+  
+  # LDA
+  lda.mod <- lda(allstar ~ ., data = sa.train) 
+  pred.lda.test <- predict(lda.mod, sa.test[, -ncol(sa.test)])
+  tableLDA <- table("Reference" = sa.test[, ncol(sa.test)], "Predicted" = pred.lda.test$class)
+  resultLDA[1, 1] <- resultLDA[1, 1] + ((tableLDA[1, 1] / (tableLDA[1, 1] + tableLDA[2, 1]))) # False Precision
+  resultLDA[2, 1] <- resultLDA[2, 1] + ((tableLDA[2, 2] / (tableLDA[2, 2] + tableLDA[1, 2]))) # True Precision
+  resultLDA[1, 2] <- resultLDA[1, 2] + ((tableLDA[1, 1] / (tableLDA[1, 1] + tableLDA[1, 2]))) # False Recall
+  resultLDA[2, 2] <- resultLDA[2, 2] + ((tableLDA[2, 2] / (tableLDA[2, 2] + tableLDA[2, 1]))) # True Recall
+  resultLDA[3, 3] <- resultLDA[3, 3] + ((tableLDA[1, 1] + tableLDA[2, 2]) / nrow(sa.test)) # Accuracy
+  
+  # QDA
+  qda.mod <- qda(allstar ~ ., data = sa.train)
+  pred.qda.test <- predict(qda.mod, sa.test[, -ncol(sa.test)])
+  tableQDA <- table("Reference" = sa.test[, ncol(sa.test)], "Predicted" = pred.qda.test$class)
+  resultQDA[1, 1] <- resultQDA[1, 1] + ((tableQDA[1, 1] / (tableQDA[1, 1] + tableQDA[2, 1]))) # False Precision
+  resultQDA[2, 1] <- resultQDA[2, 1] + ((tableQDA[2, 2] / (tableQDA[2, 2] + tableQDA[1, 2]))) # True Precision
+  resultQDA[1, 2] <- resultQDA[1, 2] + ((tableQDA[1, 1] / (tableQDA[1, 1] + tableQDA[1, 2]))) # False Recall
+  resultQDA[2, 2] <- resultQDA[2, 2] + ((tableQDA[2, 2] / (tableQDA[2, 2] + tableQDA[2, 1]))) # True Recall
+  resultQDA[3, 3] <- resultQDA[3, 3] + ((tableQDA[1, 1] + tableQDA[2, 2]) / nrow(sa.test)) # Accuracy
+
+# F-1 Score LR
+resultLR[1, 3] <- (2 * resultLR[1, 1] * resultLR[1, 2]) / (resultLR[1, 1] + resultLR[1, 2])
+resultLR[2, 3] <- (2 * resultLR[2, 1] * resultLR[2, 2]) / (resultLR[2, 1] + resultLR[2, 2])
+resultLR[3, c(1, 2)] <- NA
+resultLR
+
+# F-1 Score KNN
+resultKNN[1, 3] <- (2 * resultKNN[1, 1] * resultKNN[1, 2]) / (resultKNN[1, 1] + resultKNN[1, 2])
+resultKNN[2, 3] <- (2 * resultKNN[2, 1] * resultKNN[2, 2]) / (resultKNN[2, 1] + resultKNN[2, 2])
+resultKNN[3, c(1, 2)] <- NA
+resultKNN
+
+# F-1 Score LDA
+resultLDA[1, 3] <- (2 * resultLDA[1, 1] * resultLDA[1, 2]) / (resultLDA[1, 1] + resultLDA[1, 2])
+resultLDA[2, 3] <- (2 * resultLDA[2, 1] * resultLDA[2, 2]) / (resultLDA[2, 1] + resultLDA[2, 2])
+resultLDA[3, c(1, 2)] <- NA
+resultLDA
+
+# F-1 Score QDA
+resultQDA[1, 3] <- (2 * resultQDA[1, 1] * resultQDA[1, 2]) / (resultQDA[1, 1] + resultQDA[1, 2])
+resultQDA[2, 3] <- (2 * resultQDA[2, 1] * resultQDA[2, 2]) / (resultQDA[2, 1] + resultQDA[2, 2])
+resultQDA[3, c(1, 2)] <- NA
+resultQDA
+
+```
+
+
+
+
